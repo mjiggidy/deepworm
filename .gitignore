@@ -110,6 +110,23 @@ ENV/
 env.bak/
 venv.bak/
 
+# venv additional
+Scripts/activate
+Scripts/activate.bat
+Scripts/Activate.ps1
+Scripts/deactivate.bat
+Scripts/easy_install-3.8.exe
+Scripts/easy_install.exe
+Scripts/pip.exe
+Scripts/pip3.8.exe
+Scripts/pip3.exe
+Scripts/pyside2-designer.exe
+Scripts/pyside2-lupdate.exe
+Scripts/pyside2-rcc.exe
+Scripts/pyside2-uic.exe
+Scripts/python.exe
+Scripts/pythonw.exe
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -127,3 +144,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
