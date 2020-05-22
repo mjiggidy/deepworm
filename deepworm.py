@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 
 from PySide2 import QtUiTools, QtWidgets
+from ui.wnd_main import Ui_MainWindow
 import sys, pathlib
+
+class MainWindow(QtWidgets.QMainWindow):
+
+	def __init__(self):
+		super(MainWindow, self).__init__()
+		self.ui = Ui_MainWindow()
+		self.ui.setupUi(self)
 
 def main(argv):
 
 	app = QtWidgets.QApplication(argv)
 
-	ui_file = pathlib.Path(pathlib.Path(__file__).parent, "ui", "wnd_main_commonext.ui")
-	ui_loader = QtUiTools.QUiLoader()
-	window = ui_loader.load(str(ui_file), None)
-	window.show()
+	wnd_main = MainWindow()
+	wnd_main.show()
 
 	sys.exit(app.exec_())
 
