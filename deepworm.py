@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-from PySide2 import QtUiTools, QtWidgets
+from PySide2 import QtUiTools, QtWidgets, QtCore
 from ui.wnd_main import Ui_MainWindow
 from upco_tools import upco_timecode
-import sys, pathlib, requests, urllib
-
-API_BASE_URL = "http://127.0.0.1:5000/dailies/v1/"
+import sys, pathlib, requests, urllib, configparser
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -19,7 +17,13 @@ class Deepworm(QtWidgets.QApplication):
 	def __init__(self, argv):
 		super(Deepworm, self).__init__(argv)
 
+		# Load config from file
+		self.config = configparser.ConfigParser()
+		self.loadConfig()
+		self.api_base_url = f"http://{self.config['connection'].get('server_ip', '127.0.1.1')}:{self.config['connection'].get('server_port')}/dailies/v1/"
+
 		# Load initial state
+		self.setStyle(self.config["interface"].get("theme"))
 		self.shows = self.getShowList()
 		self.active_show = None
 
@@ -30,12 +34,22 @@ class Deepworm(QtWidgets.QApplication):
 	
 		# Active Show dropdown
 		{self.wnd_main.ui.cmb_activeshow.addItem(x.get("title"), x.get("guid_show")) for x in self.shows}
-		self.wnd_main.ui.cmb_activeshow.currentIndexChanged.connect(lambda x: self.changeShow(self.wnd_main.ui.cmb_activeshow.itemData(x)))
-
 		self.wnd_main.ui.tree_alldailies.setAlternatingRowColors(True)
 
 		# Set active show for program
+		if self.config["interface"].get("lastshow"):
+			show_index = self.wnd_main.ui.cmb_activeshow.findText(self.config["interface"].get("lastshow"), QtCore.Qt.MatchFixedString)
+			if show_index >= 0:
+				self.wnd_main.ui.cmb_activeshow.setCurrentIndex(show_index)
 		self.changeShow(self.wnd_main.ui.cmb_activeshow.itemData(self.wnd_main.ui.cmb_activeshow.currentIndex()))
+		
+		# Set event listener after initial setup handles this explicitly
+		self.wnd_main.ui.cmb_activeshow.currentIndexChanged.connect(lambda x: self.changeShow(self.wnd_main.ui.cmb_activeshow.itemData(x)))
+
+	
+	def __del__(self):
+		self.config["interface"].update({"lastshow":self.active_show_name})
+		self.writeConfig()
 	
 	@property
 	def active_show_guid(self):
@@ -45,15 +59,42 @@ class Deepworm(QtWidgets.QApplication):
 		return self.active_show.get("title")
 	
 	def getShowList(self):
-		r = requests.get(f"{API_BASE_URL}/shows")
+		r = requests.get(f"{self.api_base_url}/shows")
 		
 		if r.status_code != 200:
 			raise FileNotFoundError(f"({r.status_code}) Error connecting to API")
 
 		return list(r.json())
 
-	def changeShow(self, guid_show):
+	def loadConfig(self, path_config=pathlib.Path.home()/".config"/"deepworm.ini"):
+		if not path_config.exists():
+			self.config["connection"] = {
+				"username": "",
+				"password": "",
+				"server_ip": "127.0.0.1",
+				"server_port": "5000"
+			}
+			self.config["interface"] = {
+				"theme": "fusion"
+			}
+
+			self.writeConfig(path_config)
 		
+		else:
+			try:
+				self.config.read(path_config)
+			except Exception as e:
+				sys.stderr.write(f"Unable to read config file from {path_config}: {e}")
+
+	def writeConfig(self, path_config=pathlib.Path.home()/".config"/"deepworm.ini"):
+		try:
+			path_config.parent.mkdir(parents=True, exist_ok=True)
+			with path_config.open('w') as file_config:
+				self.config.write(file_config)
+		except Exception as e:
+			sys.stderr.write(f"Unable to write config file to {path_config}: {e}")
+	
+	def changeShow(self, guid_show):
 		for x in self.shows:
 			if x.get("guid_show") == guid_show:
 				self.active_show = x
@@ -61,7 +102,7 @@ class Deepworm(QtWidgets.QApplication):
 		if guid_show != self.active_show_guid:
 			raise ValueError(f"Show not found for guid {guid_show}")
 
-		r = requests.get(f"{API_BASE_URL}/shots/{self.active_show_guid}")
+		r = requests.get(f"{self.api_base_url}/shots/{self.active_show_guid}")
 
 		if r.status_code != 200:
 			raise FileNotFoundError(f"({r.status_code}) Invalid show guid: {self.active_show_guid}")
