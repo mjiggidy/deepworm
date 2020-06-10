@@ -24,17 +24,55 @@ class Deepworm(QtWidgets.QApplication):
 
 		# Load initial state
 		self.setStyle(self.config["interface"].get("theme"))
-		self.shows = self.getShowList()
+		self.shows = []
 		self.active_show = None
 
 		# Set up main window
 		self.wnd_main = MainWindow()
 		self.wnd_main.show()
 		self.wnd_main.ui.col_left.setCurrentIndex(self.wnd_main.ui.col_left.indexOf(self.wnd_main.ui.tab_alldailies))
+		
+		# Treeview
+		self.wnd_main.ui.tree_alldailies.setAlternatingRowColors(True)
+
+		# Set active show for program
+		while True:
+			try:
+				self.populateShowInfo()
+				break
+			except ConnectionError as e:
+				wnd_err = QtWidgets.QMessageBox.critical(self.wnd_main,
+					"Connection Error",
+					f"Unable to connect to server {self.config['connection'].get('server_ip', '127.0.1.1')}:{self.config['connection'].get('server_port')}:\n\n{e}",
+					QtWidgets.QMessageBox.Retry|QtWidgets.QMessageBox.Abort,
+					QtWidgets.QMessageBox.Abort)
+				if wnd_err == QtWidgets.QMessageBox.Abort:
+					break
+
+
+
+		# Set event listener after initial setup handles this explicitly
+		self.wnd_main.ui.cmb_activeshow.currentIndexChanged.connect(lambda x: self.changeShow(self.wnd_main.ui.cmb_activeshow.itemData(x)))
 	
+	def __del__(self):
+		try:
+			self.config["interface"].update({"lastshow":self.active_show_name})
+			self.writeConfig()
+		except Exception as e:
+			sys.stderr.write(f"Error writing to config file: {e}")
+	
+	@property
+	def active_show_guid(self):
+		return self.active_show.get("guid_show")
+	@property
+	def active_show_name(self):
+		return self.active_show.get("title")
+
+	def populateShowInfo(self):
+		self.shows = self.getShowList()
+
 		# Active Show dropdown
 		{self.wnd_main.ui.cmb_activeshow.addItem(x.get("title"), x.get("guid_show")) for x in self.shows}
-		self.wnd_main.ui.tree_alldailies.setAlternatingRowColors(True)
 
 		# Set active show for program
 		if self.config["interface"].get("lastshow"):
@@ -43,26 +81,12 @@ class Deepworm(QtWidgets.QApplication):
 				self.wnd_main.ui.cmb_activeshow.setCurrentIndex(show_index)
 		self.changeShow(self.wnd_main.ui.cmb_activeshow.itemData(self.wnd_main.ui.cmb_activeshow.currentIndex()))
 		
-		# Set event listener after initial setup handles this explicitly
-		self.wnd_main.ui.cmb_activeshow.currentIndexChanged.connect(lambda x: self.changeShow(self.wnd_main.ui.cmb_activeshow.itemData(x)))
-
-	
-	def __del__(self):
-		self.config["interface"].update({"lastshow":self.active_show_name})
-		self.writeConfig()
-	
-	@property
-	def active_show_guid(self):
-		return self.active_show.get("guid_show")
-	@property
-	def active_show_name(self):
-		return self.active_show.get("title")
 	
 	def getShowList(self):
 		r = requests.get(f"{self.api_base_url}/shows")
 		
 		if r.status_code != 200:
-			raise FileNotFoundError(f"({r.status_code}) Error connecting to API")
+			raise ConnectionError(f"({r.status_code}) Error connecting to API")
 
 		return list(r.json())
 
