@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 
 from PySide2 import QtUiTools, QtWidgets, QtCore
-from ui.wnd_main_manual import WindowMain
+from ui.wnd_main import Ui_MainWindow
 from upco_tools import upco_timecode
 import sys, pathlib, requests, urllib, configparser
 
+class MainWindow(QtWidgets.QMainWindow):
+
+	def __init__(self):
+		super(MainWindow, self).__init__()
+		self.ui = Ui_MainWindow()
+		self.ui.setupUi(self)
 
 class Deepworm(QtWidgets.QApplication):
 
@@ -22,9 +28,13 @@ class Deepworm(QtWidgets.QApplication):
 		self.active_show = None
 
 		# Set up main window
-		self.wnd_main = WindowMain()
+		self.wnd_main = MainWindow()
 		self.wnd_main.show()
+		self.wnd_main.ui.col_left.setCurrentIndex(self.wnd_main.ui.col_left.indexOf(self.wnd_main.ui.tab_alldailies))
 		
+		# Treeview
+		self.wnd_main.ui.tree_alldailies.setAlternatingRowColors(True)
+
 		# Set active show for program
 		while True:
 			try:
@@ -42,7 +52,7 @@ class Deepworm(QtWidgets.QApplication):
 
 
 		# Set event listener after initial setup handles this explicitly
-		self.wnd_main.ui_activeshowselector.cmb_activeshow.currentIndexChanged.connect(lambda x: self.changeShow(self.wnd_main.ui_activeshowselector.cmb_activeshow.itemData(x)))
+		self.wnd_main.ui.cmb_activeshow.currentIndexChanged.connect(lambda x: self.changeShow(self.wnd_main.ui.cmb_activeshow.itemData(x)))
 	
 	def __del__(self):
 		try:
@@ -62,14 +72,14 @@ class Deepworm(QtWidgets.QApplication):
 		self.shows = self.getShowList()
 
 		# Active Show dropdown
-		{self.wnd_main.ui_activeshowselector.cmb_activeshow.addItem(x.get("title"), x.get("guid_show")) for x in self.shows}
+		{self.wnd_main.ui.cmb_activeshow.addItem(x.get("title"), x.get("guid_show")) for x in self.shows}
 
 		# Set active show for program
 		if self.config["interface"].get("lastshow"):
-			show_index = self.wnd_main.ui_activeshowselector.cmb_activeshow.findText(self.config["interface"].get("lastshow"), QtCore.Qt.MatchFixedString)
+			show_index = self.wnd_main.ui.cmb_activeshow.findText(self.config["interface"].get("lastshow"), QtCore.Qt.MatchFixedString)
 			if show_index >= 0:
-				self.wnd_main.ui_activeshowselector.cmb_activeshow.setCurrentIndex(show_index)
-		self.changeShow(self.wnd_main.ui_activeshowselector.cmb_activeshow.itemData(self.wnd_main.ui_activeshowselector.cmb_activeshow.currentIndex()))
+				self.wnd_main.ui.cmb_activeshow.setCurrentIndex(show_index)
+		self.changeShow(self.wnd_main.ui.cmb_activeshow.itemData(self.wnd_main.ui.cmb_activeshow.currentIndex()))
 		
 	
 	def getShowList(self):
