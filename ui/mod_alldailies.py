@@ -1,4 +1,4 @@
-from PySide2 import QtWidgets
+from PySide2 import QtWidgets, QtGui
 
 class AllDailiesView(QtWidgets.QWidget):
 
@@ -13,3 +13,23 @@ class AllDailiesView(QtWidgets.QWidget):
 		self.lay_main.addWidget(self.lbl_summary)
 		self.tree_alldailies = QtWidgets.QTreeView()
 		self.lay_main.addWidget(self.tree_alldailies)
+	
+	def setShots(self, shotlist=None):
+		
+		shotlist = shotlist or []
+		
+		self.columns = ("Shot","Start","End")
+		
+		self.model_dailies = QtGui.QStandardItemModel()
+		#self.model_dailies.setColumnCount(len(self.columns))
+		self.model_dailies.setHorizontalHeaderLabels(self.columns)
+
+		item_root = self.model_dailies.invisibleRootItem()
+		for shot in shotlist:
+			item_root.appendRow([
+				QtGui.QStandardItem(shot.shot),
+				QtGui.QStandardItem(str(shot.tc_start)),
+				QtGui.QStandardItem(str(shot.tc_end))
+			])
+		
+		self.tree_alldailies.setModel(self.model_dailies)
