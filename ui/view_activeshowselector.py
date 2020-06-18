@@ -14,3 +14,10 @@ class ActiveShowSelector(QtWidgets.QGroupBox):
 		
 		self.cmb_activeshow = QtWidgets.QComboBox()
 		self.lay_main.addWidget(self.cmb_activeshow)
+	
+	def setShowList(self, showlist):
+		for show in showlist:
+			self.cmb_activeshow.addItem(show.get("title"), show.get("guid_show"))
+	
+	def getActiveShow(self):
+		return {"guid_show": self.cmb_activeshow.currentData(), "title": self.cmb_activeshow.currentText()}
