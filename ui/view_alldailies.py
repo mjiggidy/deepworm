@@ -22,6 +22,8 @@ class AllDailiesView(QtWidgets.QWidget):
 		self.lay_main.addWidget(self.tree_alldailies)
 	
 	def setShotList(self, shotlist=None):
+
+		self.tree_alldailies.setSortingEnabled(False)
 		
 		shotlist = shotlist or []
 
@@ -32,7 +34,6 @@ class AllDailiesView(QtWidgets.QWidget):
 		{self.columns.append(x) for x in sorted(headers) if x not in self.columns}
 		
 		self.model_dailies = QtGui.QStandardItemModel()
-		#self.model_dailies.setColumnCount(len(self.columns))
 		self.model_dailies.setHorizontalHeaderLabels(self.columns)
 
 		item_root = self.model_dailies.invisibleRootItem()
@@ -43,6 +44,9 @@ class AllDailiesView(QtWidgets.QWidget):
 		
 		self.tree_alldailies.setModel(self.model_dailies)
 		self.lbl_summary.setText(f"Showing all {self.model_dailies.rowCount():,} shots")
+
+		self.tree_alldailies.resizeColumnToContents(0)
+		self.tree_alldailies.setSortingEnabled(True)
 	
 	def chooseColumns(self):
 		self.wnd_choosecolumns = ColumnChooser(self, [(not self.tree_alldailies.isColumnHidden(x), self.columns[x]) for x in range(len(self.columns))])
@@ -78,7 +82,3 @@ class ColumnChooser(QtWidgets.QDialog):
 		self.box_save.addButton(self.btn_ok, QtWidgets.QDialogButtonBox.ButtonRole.ApplyRole)
 		self.box_save.addButton(self.btn_cancel, QtWidgets.QDialogButtonBox.ButtonRole.RejectRole)
 		self.lay_main.addWidget(self.box_save)
-
-	def returnSelectedColumns(self):
-#		self.visibleColumns = self.list_columns.selectedIndexes()
-		self.accept()
