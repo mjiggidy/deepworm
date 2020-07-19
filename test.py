@@ -1,7 +1,7 @@
 from PySide2 import QtCore, QtWidgets
 from ui import wnd_main
 from upco_tools import upco_shot
-import requests, sys, json
+import requests, sys, json, time
 
 
 class Deepworm(QtWidgets.QApplication):
@@ -43,10 +43,17 @@ class Deepworm(QtWidgets.QApplication):
 	
 	def setCurrentShow(self):
 		self.show_selector.cmb_activeshow.setDisabled(True)
-
+		
 		showinfo = self.show_selector.getActiveShow()
-		self.wnd_main.setWindowTitle(f"Deepworm - {showinfo.get('title')}")
+		self.wnd_main.statusBar().showMessage(f"Loading {showinfo.get('title')}...")
+		
+		time_start = time.time()
+
 		self.view_alldailies.setShotList(list(self.getShotList(showinfo.get("guid_show"))))
+		
+		time_end = time.time() - time_start
+		self.wnd_main.statusBar().showMessage(f"Loaded {showinfo.get('title')} in {time_end:.2f} seconds")
+		self.wnd_main.setWindowTitle(f"Deepworm - {showinfo.get('title')}")
 
 		self.show_selector.cmb_activeshow.setDisabled(False)
 
