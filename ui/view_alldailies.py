@@ -61,7 +61,7 @@ class AllDailiesView(QtWidgets.QWidget):
 		self.tree_alldailies.sortByColumn(0, QtCore.Qt.SortOrder.AscendingOrder)
 
 		# Add buttons
-		col_diva = self.columns.index("Ondiva")
+		col_diva = self.columns.index("Ondiva") if "Ondiva" in self.columns else None
 		if col_diva is not None:
 			print("Adding buttons")
 			for x in range(len(shotlist)): self.tree_alldailies.setIndexWidget(self.model_dailies.index(x,col_diva), QtWidgets.QPushButton("Restore from Diva"))
