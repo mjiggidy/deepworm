@@ -165,3 +165,5 @@ upco_tools/upco_timecode.py
 upco_tools/upco_tk.py
 upco_tools/bin/win32/DivaApi.dll
 upco_tools/bin/win32/divascript.exe
+ui/wnd_main_commonext.ui
+ui/wnd_main_commonext.ui
